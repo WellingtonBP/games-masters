@@ -4,7 +4,7 @@ import Game from '../models/Game'
 import Favorite from '../models/Favorite'
 import fetchGameDetails from '../utils/fetchGameDetails'
 import filterFields from '../utils/filterFields'
-import { CustomError } from '../types'
+import { CustomError, GameDetailsData } from '../types'
 
 class MainController {
   async getGames(req: Request, res: Response, next: NextFunction) {
@@ -103,6 +103,51 @@ class MainController {
       await favoritesList.save()
 
       res.status(201).json({ message: 'ok' })
+    } catch (err) {
+      next(err)
+    }
+  }
+
+  async getFavorite(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userHash = req.get('user-hash')
+      const { fields } = req.query
+
+      if (!userHash) {
+        const error: CustomError = new Error()
+        error.status = 422
+        error.customMessage = 'user-hash header not found'
+        throw error
+      }
+
+      const favoritesList = await Favorite.findOne(
+        { userHash },
+        { _id: 0, __v: 0 }
+      )
+
+      if (!favoritesList) {
+        const error: CustomError = new Error()
+        error.status = 404
+        error.customMessage = "We can't find this user"
+        throw error
+      }
+
+      const games: {
+        game: Partial<GameDetailsData>
+        rating?: number
+      }[] = []
+
+      for (const favoriteGame of favoritesList.games) {
+        const gameDetails = (await fetchGameDetails(favoriteGame.id))!
+        games.push({
+          game: fields
+            ? await filterFields(String(fields), gameDetails)
+            : gameDetails,
+          rating: favoriteGame.rating
+        })
+      }
+
+      res.status(200).json(games)
     } catch (err) {
       next(err)
     }
