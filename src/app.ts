@@ -3,17 +3,26 @@ import cors from 'cors'
 import { connect } from 'mongoose'
 import dotenv from 'dotenv'
 
-import routes from './routes'
+import MainController from './controllers/MainController'
 import { CustomError } from './types'
 
 dotenv.config()
 
 const app = express()
+const mainController = new MainController()
 
 app.use(express.json())
 app.use(cors())
 
-app.use(routes)
+app
+  .route('/favorite')
+  .post(mainController.setFavorite)
+  .get(mainController.getFavorite)
+
+app.delete('/favorite/:id', mainController.delFavorite)
+
+app.get('/:id', mainController.getGame)
+app.get('/', mainController.getGames)
 
 app.use((req, res, next) => {
   const notFoundError: CustomError = new Error()
