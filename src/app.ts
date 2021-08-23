@@ -23,7 +23,7 @@ app.use((req, res, next) => {
 })
 
 app.use((err: CustomError, req: Request, res: Response, next: NextFunction) => {
-  // console.log(err)
+  console.log(err)
   res.status(err.status || 500).json({
     error: err.customMessage || 'Something went wrong'
   })

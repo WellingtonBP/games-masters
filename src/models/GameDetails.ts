@@ -2,42 +2,6 @@ import { Schema, model } from 'mongoose'
 
 import { GameDetailsDoc } from '../types'
 
-export const fields = [
-  'type',
-  'name',
-  'steam_appid',
-  'required_age',
-  'is_free',
-  'dlc',
-  'detailed_description',
-  'about_the_game',
-  'short_description',
-  'supported_languages',
-  'header_image',
-  'website',
-  'pc_requirements',
-  'mac_requirements',
-  'linux_requirements',
-  'developers',
-  'publishers',
-  'demos',
-  'price_overview',
-  'packages',
-  'package_groups',
-  'platforms',
-  'metacritic',
-  'categories',
-  'genres',
-  'screenshots',
-  'movies',
-  'recommendations',
-  'achievements',
-  'release_date',
-  'support_info',
-  'background',
-  'content_descriptors'
-]
-
 const GameDetailsSchema = new Schema({
   type: String,
   name: String,

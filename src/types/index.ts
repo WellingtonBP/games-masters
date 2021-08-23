@@ -6,6 +6,12 @@ type Game = {
 }
 type GameDoc = Document & Game
 
+type Favorite = {
+  userHash: string
+  games: { rating?: number; id: number }[]
+}
+type FavoriteDoc = Document & Favorite
+
 type GameDetailsData = {
   type: string
   name: string
@@ -139,6 +145,8 @@ type CustomError = Error & {
 export {
   Game,
   GameDoc,
+  Favorite,
+  FavoriteDoc,
   GameDetailsData,
   GameDetailsDoc,
   GameDetailsResponse,

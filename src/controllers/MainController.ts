@@ -1,8 +1,9 @@
 import { Request, Response, NextFunction } from 'express'
-import axios from 'axios'
 
 import Game from '../models/Game'
-import GameDetails, { fields as acceptFields } from '../models/GameDetails'
+import Favorite from '../models/Favorite'
+import fetchGameDetails from '../utils/fetchGameDetails'
+import filterFields from '../utils/filterFields'
 import { CustomError } from '../types'
 
 class MainController {
@@ -31,44 +32,77 @@ class MainController {
         throw error
       }
 
-      let game = await GameDetails.findOne(
-        { steam_appid: Number(id) },
-        { _id: 0, __v: 0 }
-      )
+      let game = await fetchGameDetails(Number(id))
 
       if (!game) {
-        const responseData = (
-          await axios.get(
-            `https://store.steampowered.com/api/appdetails?appids=${id}`
-          )
-        ).data
-        if (!responseData[id].success || !responseData) {
-          const error: CustomError = new Error()
-          error.status = 404
-          error.customMessage = "We can't find this game"
-          throw error
-        }
-        game = new GameDetails(responseData[id].data)
-        await game.save()
+        const error: CustomError = new Error()
+        error.status = 404
+        error.customMessage = "We can't find this game"
+        throw error
       }
-
-      const searchedFields = fields
-        ? String(fields)
-            .split(',')
-            .filter(field => acceptFields.includes(field))
-        : []
 
       res
         .status(200)
-        .json(
-          searchedFields.length
-            ? Object.fromEntries(
-                Object.entries(game.toJSON()).filter(([field, value]) =>
-                  searchedFields.includes(field)
-                )
-              )
-            : game
-        )
+        .json(fields ? await filterFields(String(fields), game) : game)
+    } catch (err) {
+      next(err)
+    }
+  }
+
+  async setFavorite(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { rating, gameid } = req.body
+      const userHash = req.get('user-hash')
+
+      if (!userHash || !Number(gameid)) {
+        const error: CustomError = new Error()
+        error.status = 422
+        let message = ''
+        if (!userHash) {
+          message += '\n user-hash header not found'
+        }
+        if (!Number(gameid)) {
+          message += '\n invalid game id'
+        }
+        error.customMessage = message
+        throw error
+      }
+
+      if (Number(rating) && !(Number(rating) > 0 && Number(rating) <= 5)) {
+        const error: CustomError = new Error()
+        error.status = 422
+        error.customMessage = 'Invalid rating, must be between 0 and 5'
+        throw error
+      }
+
+      const game = await fetchGameDetails(Number(gameid))
+      if (!game) {
+        const error: CustomError = new Error()
+        error.status = 404
+        error.customMessage = "We can't find this game"
+        throw error
+      }
+
+      let favoritesList = await Favorite.findOne({ userHash })
+      if (!favoritesList) {
+        favoritesList = new Favorite({ userHash, games: [] })
+      }
+
+      const indexInList = favoritesList.games.findIndex(
+        game => Number(game.id) === Number(gameid)
+      )
+      if (indexInList !== -1) {
+        favoritesList.games[indexInList] = {
+          id: Number(gameid),
+          rating: Number(rating)
+        }
+      } else {
+        favoritesList.games.push({ id: Number(gameid), rating: Number(rating) })
+      }
+
+      await favoritesList.save()
+
+      res.status(201).json({ message: 'ok' })
     } catch (err) {
       next(err)
     }
