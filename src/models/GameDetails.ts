@@ -1,6 +1,6 @@
 import { Schema, model } from 'mongoose'
 
-import { GameDetailsDoc } from './types'
+import { GameDetailsDoc } from '../types'
 
 const GameDetailsSchema = new Schema({
   type: String,

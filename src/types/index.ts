@@ -4,7 +4,6 @@ type Game = {
   appid: number
   name?: string
 }
-
 type GameDoc = Document & Game
 
 type GameDetailsData = {
@@ -132,4 +131,16 @@ type GameDetailsResponse = Record<
 >
 type GameDetailsDoc = Document & GameDetailsData
 
-export { Game, GameDoc, GameDetailsData, GameDetailsDoc, GameDetailsResponse }
+type CustomError = Error & {
+  customMessage?: string
+  status?: number
+}
+
+export {
+  Game,
+  GameDoc,
+  GameDetailsData,
+  GameDetailsDoc,
+  GameDetailsResponse,
+  CustomError
+}

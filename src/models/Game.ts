@@ -1,6 +1,6 @@
 import { Schema, model } from 'mongoose'
 
-import { GameDoc } from './types'
+import { GameDoc } from '../types'
 
 const GameSchema = new Schema({
   appid: {
