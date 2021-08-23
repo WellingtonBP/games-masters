@@ -6,7 +6,12 @@
   "author": "Wellington Pacheco",
   "scripts": {
     "build": "sucrase ./src -d ./dist --transforms typescript,imports",
-    "start": "nodemon ./src/app.ts"
+    "dev": "nodemon ./src/app.ts",
+    "postinstall": "npm run build",
+    "start": "node ./dist/app.js"
+  },
+  "engines": {
+    "node": "14.17.0"
   },
   "license": "MIT",
   "devDependencies": {

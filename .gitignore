@@ -8,6 +8,10 @@ yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
 
+#deploy
+Procfile
+dist
+
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
 
