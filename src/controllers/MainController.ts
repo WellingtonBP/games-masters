@@ -72,13 +72,14 @@ class MainController {
       const indexInList = favoritesList.games.findIndex(
         game => game.id === Number(gameid)
       )
+      const favorite = {
+        id: Number(gameid),
+        rating: Number(rating) || undefined
+      }
       if (indexInList !== -1) {
-        favoritesList.games[indexInList] = {
-          id: Number(gameid),
-          rating: Number(rating)
-        }
+        favoritesList.games[indexInList] = favorite
       } else {
-        favoritesList.games.push({ id: Number(gameid), rating: Number(rating) })
+        favoritesList.games.push(favorite)
       }
 
       await favoritesList.save()
