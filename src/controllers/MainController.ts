@@ -5,7 +5,6 @@ import Favorite from '../models/Favorite'
 import fetchGameDetails from '../utils/fetchGameDetails'
 import filterFields from '../utils/filterFields'
 import {
-  checkFavoriteList,
   checkGame,
   checkGameId,
   checkUserHash
@@ -20,9 +19,14 @@ class MainController {
       const { offset, limit } = req.query
       const games = await Game.find()
         .skip(Number(offset) || 0)
-        .limit(Number(limit) || 0)
+        .limit(Number(limit) || 300)
         .select('-_id')
-      res.status(200).json(games)
+
+      res.status(200).json({
+        applist: {
+          apps: games
+        }
+      })
     } catch (err) {
       next(err)
     }
@@ -38,9 +42,12 @@ class MainController {
       let game = await fetchGameDetails(Number(id))
       checkGame(game)
 
-      res
-        .status(200)
-        .json(fields ? await filterFields(String(fields), game!) : game)
+      res.status(200).json({
+        [id]: {
+          success: true,
+          data: fields ? await filterFields(String(fields), game!) : game
+        }
+      })
     } catch (err) {
       next(err)
     }
@@ -102,7 +109,9 @@ class MainController {
         { _id: 0, __v: 0 }
       )
 
-      checkFavoriteList(favoriteList)
+      if (!favoriteList) {
+        res.status(204).end()
+      }
 
       const games: {
         game: Partial<GameDetailsData>
@@ -135,7 +144,9 @@ class MainController {
 
       const favoriteList = await Favorite.findOne({ userHash })
 
-      checkFavoriteList(favoriteList)
+      if (!favoriteList) {
+        res.status(204).end()
+      }
 
       favoriteList!.games = favoriteList!.games.filter(
         game => game.id !== Number(id)
@@ -143,7 +154,9 @@ class MainController {
 
       await favoriteList!.save()
 
-      res.status(204).end()
+      res.status(200).json({
+        message: 'success'
+      })
     } catch (err) {
       next(err)
     }

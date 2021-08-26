@@ -27,13 +27,4 @@ function checkGame(game: GameDetailsDoc | null): never | void {
   }
 }
 
-function checkFavoriteList(list: FavoriteDoc | null): never | void {
-  if (!list) {
-    const error: CustomError = new Error()
-    error.status = 404
-    error.customMessage = "We can't find this user"
-    throw error
-  }
-}
-
-export { checkUserHash, checkGameId, checkGame, checkFavoriteList }
+export { checkUserHash, checkGameId, checkGame }
