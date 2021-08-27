@@ -16,6 +16,7 @@ type GameDetailsData = {
   type: string
   name: string
   steam_appid: number
+  appid: number
   required_age: number
   is_free: boolean
   dlc: number[]

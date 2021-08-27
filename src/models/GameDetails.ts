@@ -6,6 +6,7 @@ const GameDetailsSchema = new Schema({
   type: String,
   name: String,
   steam_appid: Number,
+  appid: Number,
   required_age: Number,
   is_free: Boolean,
   dlc: [Number],

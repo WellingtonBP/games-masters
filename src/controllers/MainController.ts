@@ -22,11 +22,7 @@ class MainController {
         .limit(Number(limit) || 300)
         .select('-_id')
 
-      res.status(200).json({
-        applist: {
-          apps: games
-        }
-      })
+      res.status(200).json(games)
     } catch (err) {
       next(err)
     }
@@ -42,12 +38,9 @@ class MainController {
       let game = await fetchGameDetails(Number(id))
       checkGame(game)
 
-      res.status(200).json({
-        [id]: {
-          success: true,
-          data: fields ? await filterFields(String(fields), game!) : game
-        }
-      })
+      res
+        .status(200)
+        .json(fields ? await filterFields(String(fields), game!) : game)
     } catch (err) {
       next(err)
     }
@@ -55,7 +48,7 @@ class MainController {
 
   async setFavorite(req: Request, res: Response, next: NextFunction) {
     try {
-      const { rating, gameid } = req.body
+      const { rating, appid: gameid } = req.body
       const userHash = req.get('user-hash')
 
       checkUserHash(userHash)
@@ -91,7 +84,7 @@ class MainController {
 
       await favoritesList.save()
 
-      res.status(204).end()
+      res.status(200).end()
     } catch (err) {
       next(err)
     }
@@ -110,20 +103,17 @@ class MainController {
       )
 
       if (!favoriteList) {
-        res.status(204).end()
+        res.status(200).json([])
       }
 
-      const games: {
-        game: Partial<GameDetailsData>
-        rating?: number
-      }[] = []
+      const games: Partial<GameDetailsData> & { rating?: number }[] = []
 
       for (const favoriteGame of favoriteList!.games) {
         const gameDetails = (await fetchGameDetails(favoriteGame.id))!
-        games.push({
-          game: fields
+        const filteredGameDetails = games.push({
+          ...(fields
             ? await filterFields(String(fields), gameDetails)
-            : gameDetails,
+            : gameDetails.toJSON()),
           rating: favoriteGame.rating
         })
       }

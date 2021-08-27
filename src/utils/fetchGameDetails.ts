@@ -19,6 +19,7 @@ async function fetchGameDetails(id: number): Promise<GameDetailsDoc | null> {
       return null
     }
     game = new GameDetails(responseData[id].data)
+    game.appid = game.steam_appid
     await game.save()
     return game
   }

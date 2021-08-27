@@ -3,7 +3,7 @@ import { CustomError, GameDetailsDoc, FavoriteDoc } from '../types'
 function checkUserHash(userHash?: string): never | void {
   if (!userHash) {
     const error: CustomError = new Error()
-    error.status = 422
+    error.status = 403
     error.customMessage = 'user-hash header not found'
     throw error
   }
@@ -12,7 +12,7 @@ function checkUserHash(userHash?: string): never | void {
 function checkGameId(id?: number): never | void {
   if (!Number(id)) {
     const error: CustomError = new Error()
-    error.status = 422
+    error.status = 404
     error.customMessage = 'Invalid id'
     throw error
   }
