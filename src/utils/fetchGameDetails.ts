@@ -1,30 +1,37 @@
 import axios from 'axios'
 
-import GameDetails from '../models/GameDetails'
-import { GameDetailsDoc } from '../types'
+import { setCache, getCache } from './redisCache'
+import { GameDetailsData, CustomError, GameDetailsResponse } from '../types'
 
-async function fetchGameDetails(id: number): Promise<GameDetailsDoc | null> {
-  let game = await GameDetails.findOne(
-    { steam_appid: Number(id) },
-    { _id: 0, __v: 0 }
-  )
+function gameNotFound(): never {
+  const error: CustomError = new Error()
+  error.status = 404
+  error.customMessage = 'game not found'
+  throw error
+}
+
+async function fetchGameDetails(id: number): Promise<GameDetailsData | never> {
+  if (!Number(id)) gameNotFound()
+
+  let game: string | GameDetailsData | null = await getCache(String(id))
 
   if (!game) {
     const responseData = (
-      await axios.get(
+      await axios.get<GameDetailsResponse | null>(
         `https://store.steampowered.com/api/appdetails?appids=${id}`
       )
     ).data
-    if (!responseData[id].success || !responseData) {
-      return null
-    }
-    game = new GameDetails(responseData[id].data)
-    game.appid = game.steam_appid
-    await game.save()
-    return game
-  }
 
-  return game
+    if (!responseData?.[id].success || !responseData) gameNotFound()
+
+    game = {
+      ...responseData[id].data,
+      appid: responseData[id].data.steam_appid
+    }
+    await setCache(String(id), JSON.stringify(game))
+  } else game = JSON.parse(game)
+
+  return game as GameDetailsData
 }
 
 export default fetchGameDetails

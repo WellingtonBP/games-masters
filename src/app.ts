@@ -1,6 +1,7 @@
 import express, { Request, Response, NextFunction } from 'express'
 import cors from 'cors'
 import { connect } from 'mongoose'
+import { createClient } from 'redis'
 import dotenv from 'dotenv'
 
 import MainController from './controllers/MainController'
@@ -36,9 +37,17 @@ app.use((err: CustomError, req: Request, res: Response, next: NextFunction) => {
     error: err.customMessage || 'Something went wrong'
   })
 })
+
 connect(process.env.MONGO_URI!, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 }).then(() => {
   app.listen(process.env.PORT || 3000, () => console.log('Server Running'))
+})
+
+export const redisClient = createClient(process.env.REDIS_URI!, {
+  no_ready_check: true,
+  tls: {
+    rejectUnauthorized: false
+  }
 })

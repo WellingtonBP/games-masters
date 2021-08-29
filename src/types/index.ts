@@ -133,11 +133,9 @@ type GameDetailsResponse = Record<
   string,
   {
     success: boolean
-    data: GameDetailsData
+    data: Omit<GameDetailsData, 'appid'>
   }
 >
-type GameDetailsDoc = Document & GameDetailsData
-
 type CustomError = Error & {
   customMessage?: string
   status?: number
@@ -149,7 +147,6 @@ export {
   Favorite,
   FavoriteDoc,
   GameDetailsData,
-  GameDetailsDoc,
   GameDetailsResponse,
   CustomError
 }

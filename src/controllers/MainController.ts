@@ -3,16 +3,26 @@ import { Request, Response, NextFunction } from 'express'
 import Game from '../models/Game'
 import Favorite from '../models/Favorite'
 import fetchGameDetails from '../utils/fetchGameDetails'
-import filterFields from '../utils/filterFields'
-import {
-  checkGame,
-  checkGameId,
-  checkUserHash
-} from '../utils/validationFunctions'
 import { CustomError, GameDetailsData } from '../types'
 
-// Controller
+async function filterFields(
+  fields: string,
+  game: GameDetailsData
+): Promise<Partial<GameDetailsData>> {
+  return Object.fromEntries(
+    Object.entries(game).filter(([field, value]) => fields.includes(field))
+  )
+}
+function checkUserHash(userHash?: string): never | void {
+  if (!userHash) {
+    const error: CustomError = new Error()
+    error.status = 403
+    error.customMessage = 'user-hash header not found'
+    throw error
+  }
+}
 
+// Controller
 class MainController {
   async getGames(req: Request, res: Response, next: NextFunction) {
     try {
@@ -33,10 +43,7 @@ class MainController {
       const { id } = req.params
       const { fields } = req.query
 
-      checkGameId(Number(id))
-
       let game = await fetchGameDetails(Number(id))
-      checkGame(game)
 
       res
         .status(200)
@@ -48,11 +55,10 @@ class MainController {
 
   async setFavorite(req: Request, res: Response, next: NextFunction) {
     try {
-      const { rating, appid: gameid } = req.body
+      const { rating, appid } = req.body
       const userHash = req.get('user-hash')
 
       checkUserHash(userHash)
-      checkGameId(Number(gameid))
 
       if (Number(rating) && !(Number(rating) > 0 && Number(rating) <= 5)) {
         const error: CustomError = new Error()
@@ -61,8 +67,7 @@ class MainController {
         throw error
       }
 
-      const game = await fetchGameDetails(Number(gameid))
-      checkGame(game)
+      await fetchGameDetails(Number(appid))
 
       let favoritesList = await Favorite.findOne({ userHash })
       if (!favoritesList) {
@@ -70,10 +75,10 @@ class MainController {
       }
 
       const indexInList = favoritesList.games.findIndex(
-        game => game.id === Number(gameid)
+        game => game.id === Number(appid)
       )
       const favorite = {
-        id: Number(gameid),
+        id: Number(appid),
         rating: Number(rating) || undefined
       }
       if (indexInList !== -1) {
@@ -103,17 +108,17 @@ class MainController {
       )
 
       if (!favoriteList) {
-        res.status(200).json([])
+        return res.status(200).json([])
       }
 
       const games: Partial<GameDetailsData> & { rating?: number }[] = []
 
       for (const favoriteGame of favoriteList!.games) {
-        const gameDetails = (await fetchGameDetails(favoriteGame.id))!
+        const gameDetails = await fetchGameDetails(favoriteGame.id)
         const filteredGameDetails = games.push({
           ...(fields
             ? await filterFields(String(fields), gameDetails)
-            : gameDetails.toJSON()),
+            : gameDetails),
           rating: favoriteGame.rating
         })
       }
@@ -130,15 +135,14 @@ class MainController {
       const { id } = req.params
 
       checkUserHash(userHash)
-      checkGameId(Number(id))
 
       const favoriteList = await Favorite.findOne({ userHash })
 
       if (!favoriteList) {
-        res.status(204).end()
+        return res.status(204).end()
       }
 
-      favoriteList!.games = favoriteList!.games.filter(
+      favoriteList.games = favoriteList.games.filter(
         game => game.id !== Number(id)
       )
 
